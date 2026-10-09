@@ -128,12 +128,32 @@
     </div>
 
     <!-- Tableau de complétion — héberge aussi la barre de sélection multiple
-         (voir toggleSelectionMode/toggleProgress : les deux sont couplés,
-         puisque son seul point d'accès vit maintenant ici). -->
+         quand ce panneau est ouvert (pratique pour sélectionner par
+         extension). -->
     <CollectionCompletion
       v-if="isAuthenticated && showProgress"
       class="mt-6 max-w-screen-xl mx-auto"
       :selection-mode="selectionMode"
+      :selected-count="selectedIds.size"
+      :filtered-count="filteredCollection.length"
+      :extensions="extensions"
+      :busy="bulkBusy"
+      @select-all-page="selectAllOnPage"
+      @select-all-filtered="selectAllFiltered"
+      @select-extension="addExtensionToSelection"
+      @deselect-all="deselectAll"
+      @mark-owned="confirmSelectionMarkOwned"
+      @mark-missing="confirmSelectionMarkMissing"
+      @adjust="handleSelectionAdjust"
+      @exit="toggleSelectionMode"
+    />
+
+    <!-- Sinon (Progression fermée, cartes affichées une par une dans la
+         grille) : même barre affichée seule, pour que la sélection multiple
+         reste accessible sans avoir à ouvrir Progression. -->
+    <CollectionSelectionToolbar
+      v-if="isAuthenticated && selectionMode && !showProgress"
+      class="mt-4 max-w-screen-xl mx-auto"
       :selected-count="selectedIds.size"
       :filtered-count="filteredCollection.length"
       :extensions="extensions"
@@ -681,6 +701,7 @@ import CollectionHeader from "@/components/collection/CollectionHeader.vue";
 import CollectionFilters from "@/components/collection/CollectionFilters.vue";
 import CollectionGrid from "@/components/collection/CollectionGrid.vue";
 import CollectionCompletion from "@/components/collection/CollectionCompletion.vue";
+import CollectionSelectionToolbar from "@/components/collection/CollectionSelectionToolbar.vue";
 import QuickAddModal from "@/components/collection/QuickAddModal.vue";
 import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 import { useBulkCollectionActions } from "@/composables/useBulkCollectionActions";
@@ -822,21 +843,16 @@ function onConfirmCancel() {
 // (CollectionCompletion) : activer la sélection ouvre donc aussi ce panneau,
 // et le fermer quitte la sélection (sinon la sélection resterait active sans
 // aucun moyen d'agir dessus).
+// La barre d'actions groupées est accessible QUE « Progression » soit ouverte
+// ou non (nichée dans CollectionCompletion si ouverte, sinon affichée seule
+// juste au-dessus de la grille) — les deux options sont indépendantes.
 function toggleSelectionMode() {
   selectionMode.value = !selectionMode.value;
-  if (selectionMode.value) {
-    showProgress.value = true;
-  } else {
-    selectedIds.value = new Set();
-  }
+  if (!selectionMode.value) selectedIds.value = new Set();
 }
 
 function toggleProgress() {
   showProgress.value = !showProgress.value;
-  if (!showProgress.value && selectionMode.value) {
-    selectionMode.value = false;
-    selectedIds.value = new Set();
-  }
 }
 
 function handleToggleSelect(cardId: string) {

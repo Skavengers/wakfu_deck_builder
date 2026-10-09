@@ -1,4 +1,6 @@
--- Migration 0015 : salons ouverts énumérables pour découverte en temps réel.
+-- Migration 0019 : salons ouverts énumérables pour découverte en temps réel.
+-- (Renommée de 0015 → 0019 : collision de préfixe avec 0015_custom_cards.sql,
+-- deux branches de fonctionnalités développées en parallèle sur ce numéro.)
 --
 -- Permet aux joueurs de découvrir la liste des parties hébergées en attente
 -- d'adversaire (status = 'lobby' et seat_b is null).
